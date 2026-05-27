@@ -6,7 +6,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 // Initialize the Gemini API
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "AIzaSyCTEodqyVBTNfIUpOcy3sx7BEA38XGvEiI");
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY as string);
 
 // Connect to Upstash Cloud Redis
 const UPSTASH_URL = "rediss://default:gQAAAAAAAhbHAAIgcDE0ZTMxZGM1ZTE1Y2Q0MDRlYWRiNGIxMGJkNjJhMWRhOA@well-dragon-136903.upstash.io:6379";
