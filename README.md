@@ -1,40 +1,108 @@
-<div align="center">
-  <h1>VedaAI Architecture & Documentation</h1>
-  <p>An enterprise-grade, event-driven AI generation pipeline.</p>
-</div>
+# VedaAI - Enterprise Assignment Generator
 
-## System Overview
+VedaAI is a highly scalable, decoupled web application that generates complex academic structures utilizing the Google Gemini LLM. To prevent blocking the main thread during heavy AI inference, the system implements an asynchronous job queue mechanism bridged with bi-directional WebSocket streams for real-time client state updates.
 
-VedaAI is a highly scalable, decoupled web application that generates complex academic structures utilizing the Google Gemini LLM. To prevent blocking the main thread during heavy LLM inference, the system implements an asynchronous job queue mechanism bridged with bi-directional WebSocket streams for sub-millisecond client state reconciliation.
+## 🔗 Live Deployments
+- **Frontend (Vercel):** https://veda-ai-assessment-coral.vercel.app/
+- **Backend API (Render):** https://veda-ai-assessment-2phj.onrender.com
 
-## Core Infrastructure
+## 🛠 Tech Stack
+- **Client:** Next.js 15 (App Router), TypeScript, Tailwind CSS
+- **API Gateway:** Node.js, Express.js
+- **Job Orchestration:** BullMQ with Upstash Redis (Message Broker)
+- **Real-time Sync:** Socket.io
+- **Database:** MongoDB Atlas & Mongoose ODM
 
-- Compute Layer: Next.js 15 App Router (Client) & Express.js (API Gateway)
-- Job Orchestration: BullMQ with Upstash Redis acting as the message broker
-- State Synchronization: Socket.io for real-time room-based client pub/sub
-- Persistence: MongoDB Atlas with strict IP whitelisting and Mongoose ODM
-- Deployment: Vercel (Edge Network) & Render (Node Environment)
+---
 
-## System Lifecycle & Event Flow
+## ⚙️ Environment Configuration (.env)
 
-The platform mitigates REST API timeouts through an asynchronous worker pool:
+To replicate this environment locally or deploy it to a production server, you must define the following variables inside a `.env` file located in the root of the `backend` directory.
 
-1. Ingress Payload: Client submits constraints via HTTP POST to the gateway.
-2. Queue Delegation: The API layer registers a task in the Redis queue and immediately returns HTTP 202 Accepted with a unique Assignment ID.
-3. Socket Handshake: Client initializes a persistent WebSocket connection and joins a private room keyed to the Assignment ID.
-4. Background Execution: An isolated worker process consumes the Redis job, orchestrates the Gemini API inference, and commits the structured Markdown to MongoDB.
-5. Client Reconciliation: The worker triggers a completion event, causing the gateway to broadcast a payload down the WebSocket tunnel, instantly updating the client UI.
+```env
+# The port your local backend server will run on
+PORT=5000
 
-## Directory Structure
+# The URL of your frontend (used for CORS and Socket.io whitelist)
+FRONTEND_URL=http://localhost:3000
 
+# Your MongoDB Atlas connection string (Must include username/password)
+MONGO_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/
+
+# Your Google AI Studio API Key for Gemini inference
+GEMINI_API_KEY=AIzaSy...
+```
+*Note: Redis broker credentials (Upstash) are currently localized within the worker context for evaluation review. In a strict production environment, this would also be extracted to the `.env` file.*
+
+---
+
+## 🚀 Local Installation & Setup
+
+**Prerequisites:** [Node.js](https://nodejs.org/) (v18+), Git, and a MongoDB Atlas Cluster.
+
+### 1. Clone the Repository
+```bash
+git clone [https://github.com/Nishantog7/veda-ai-assessment.git](https://github.com/Nishantog7/veda-ai-assessment.git)
+cd veda-ai-assessment
+```
+
+### 2. Setup the Backend
+Open a terminal and navigate to the backend directory:
+```bash
+cd backend
+npm install
+```
+Ensure your `.env` file is created here with the variables listed above. Then start the development server:
+```bash
+npm run dev
+```
+
+### 3. Setup the Frontend
+Open a new terminal window and navigate to the frontend directory:
+```bash
+cd frontend
+npm install
+```
+Start the frontend development server:
+```bash
+npm run dev
+```
+The application will now be running and accessible at `http://localhost:3000`.
+
+---
+
+## ☁️ Production Deployment Architecture
+
+The application is deployed across a distributed cloud architecture to separate static frontend delivery from heavy backend compute processes.
+
+### Frontend Deployment (Vercel)
+The Next.js client application is deployed on Vercel's Edge Network for global CDN delivery.
+- **Framework Preset:** Next.js
+- **Root Directory Configuration:** The deployment is explicitly scoped to the `frontend` directory to prevent Vercel from attempting to build the Express backend.
+- **Network Routing:** The application is hardwired to communicate with the live Render API URL, bypassing local host configurations.
+
+### Backend Deployment (Render)
+The Express.js API, Socket.io server, and BullMQ worker pool are deployed as a unified Web Service on Render.
+- **Environment:** Node.js
+- **Build Command:** `npm install`
+- **Start Command:** `npx ts-node --transpile-only src/server.ts` (The `--transpile-only` flag is critically utilized to bypass memory spikes during the TypeScript compilation phase, ensuring stability within strict cloud memory limits).
+- **Port Binding:** The server utilizes dynamic port binding (`process.env.PORT`) to attach to Render's internal routing network.
+- **Database Security:** MongoDB Atlas network access is configured to `0.0.0.0/0` to safely accept connections from Render's rotating dynamic IP pool.
+
+---
+
+## 📂 Directory Structure
+
+```text
+veda-ai-assessment/
 ├── backend/
 │   ├── src/
-│   │   ├── routes/       # API endpoints 
+│   │   ├── models/       # Mongoose database schemas
+│   │   ├── routes/       # API endpoints (Express)
 │   │   ├── workers/      # BullMQ background processors
-│   │   ├── models/       # Mongoose schemas
 │   │   └── server.ts     # Express/Socket.io entry point
-│   ├── package.json
-│   └── .env
+│   ├── .env              # Backend secrets (git-ignored)
+│   └── package.json
 └── frontend/
     ├── src/
     │   ├── app/          # Next.js App Router pages
@@ -42,35 +110,22 @@ The platform mitigates REST API timeouts through an asynchronous worker pool:
     │   └── store/        # State management
     ├── package.json
     └── tailwind.config.js
+```
 
-## API & Socket Reference
+---
+
+## 📡 API & Socket Reference
 
 ### REST Endpoints
-POST /api/assignment/generate
+**`POST /api/assignment/generate`**
 Initiates the generation sequence.
-- Payload: { "topic": "string", "parameters": "object" }
-- Response: 202 Accepted -> { "assignmentId": "uuid" }
+- **Payload:** `{ "topic": "string", "parameters": "object" }`
+- **Response:** `202 Accepted` -> `{ "assignmentId": "uuid" }`
 
-GET /health
+**`GET /health`**
 System health check for Render port binding verification.
 
 ### WebSocket Events
-- Emit: join_room (Payload: assignmentId) -> Subscribes client to updates.
-- Listen: generation_complete -> Signals client to fetch the hydrated document.
-- Listen: generation_failed -> Signals client to render error boundary.
-
-## Environment Configuration
-
-To replicate this environment locally, define the following variables in the backend root:
-
-PORT=5000
-FRONTEND_URL=http://localhost:3000
-MONGO_URI=[ATLAS_CLUSTER_URL]
-GEMINI_API_KEY=[GOOGLE_AI_STUDIO_KEY]
-
-Note: Redis broker credentials (Upstash) are currently localized within the worker context for evaluation review.
-
-## Deployment Topology
-
-- Frontend Delivery: Pushed to Vercel connected to the GitHub main branch.
-- Backend Compute: Hosted on Render Web Services. The start command utilizes ts-node --transpile-only to bypass free-tier RAM limits during boot sequence. Database IP access is globally permitted (0.0.0.0/0) to accommodate Render dynamic IP rotation.
+- **Emit `join_room`:** (Payload: assignmentId) -> Subscribes client to updates.
+- **Listen `generation_complete`:** -> Signals client to fetch the hydrated document from the database.
+- **Listen `generation_failed`:** -> Signals client to render an error boundary.
