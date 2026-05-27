@@ -13,7 +13,7 @@ export const useAssignmentStore = create<AssignmentState>((set) => ({
   fetchAssignments: async () => {
     set({ isLoading: true });
     try {
-      const response = await fetch('http://localhost:5000/api/assignments');
+      const response = await fetch('https://veda-ai-assessment-2phj.onrender.com/api/assignments');
       const data = await response.json();
       if (Array.isArray(data)) set({ assignments: data, isLoading: false });
     } catch (error) {
@@ -23,7 +23,7 @@ export const useAssignmentStore = create<AssignmentState>((set) => ({
   },
   deleteAssignment: async (id: string) => {
     try {
-      await fetch(`http://localhost:5000/api/assignment/${id}`, { method: 'DELETE' });
+      await fetch(`https://veda-ai-assessment-2phj.onrender.com/api/assignment/${id}`, { method: 'DELETE' });
       
       set((state) => ({
         assignments: state.assignments.filter((a) => a._id !== id)

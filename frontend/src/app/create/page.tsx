@@ -62,7 +62,7 @@ export default function CreateAssignmentPage() {
     `;
 
     try {
-      const response = await fetch('http://localhost:5000/api/generate', {
+      const response = await fetch('https://veda-ai-assessment-2phj.onrender.com/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -76,7 +76,7 @@ export default function CreateAssignmentPage() {
 
       if (response.ok && data.assignmentId) {
         // Connect to socket and wait for the background worker to finish
-        const socket = io('http://localhost:5000');
+        const socket = io('https://veda-ai-assessment-2phj.onrender.com');
         socket.emit('join_room', data.assignmentId);
 
         socket.on('generation_complete', () => {

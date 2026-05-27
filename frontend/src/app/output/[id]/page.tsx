@@ -14,7 +14,7 @@ export default function OutputPage({ params }: { params: Promise<{ id: string }>
   const [isCopied, setIsCopied] = useState(false);
 
   useEffect(() => {
-    fetch(`http://localhost:5000/api/assignment/${id}`)
+    fetch(`https://veda-ai-assessment-2phj.onrender.com/api/assignment/${id}`)
       .then(res => res.json())
       .then(data => setAssignment(data))
       .catch(err => console.error(err));
@@ -62,7 +62,7 @@ export default function OutputPage({ params }: { params: Promise<{ id: string }>
     setIsRegenerating(true);
     
     try {
-      const res = await fetch('http://localhost:5000/api/generate', {
+      const res = await fetch('https://veda-ai-assessment-2phj.onrender.com/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -74,7 +74,7 @@ export default function OutputPage({ params }: { params: Promise<{ id: string }>
       const data = await res.json();
       
       if (data.assignmentId) {
-        const socket = io('http://localhost:5000');
+        const socket = io('https://veda-ai-assessment-2phj.onrender.com');
         socket.emit('join_room', data.assignmentId);
 
         socket.on('generation_complete', () => {
