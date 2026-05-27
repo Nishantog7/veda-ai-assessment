@@ -36,7 +36,7 @@ GEMINI_API_KEY=AIzaSy...
 
 ---
 
-## 🚀 Local Installation & Setup
+##  Local Installation & Setup
 
 **Prerequisites:** [Node.js](https://nodejs.org/) (v18+), Git, and a MongoDB Atlas Cluster.
 
@@ -71,7 +71,7 @@ The application will now be running and accessible at `http://localhost:3000`.
 
 ---
 
-## ☁️ Production Deployment Architecture
+##  Production Deployment Architecture
 
 The application is deployed across a distributed cloud architecture to separate static frontend delivery from heavy backend compute processes.
 
@@ -114,7 +114,7 @@ veda-ai-assessment/
 
 ---
 
-## 📡 API & Socket Reference
+##  API & Socket Reference
 
 ### REST Endpoints
 **`POST /api/assignment/generate`**
